@@ -141,6 +141,7 @@ def make_flags(prefix, debug):
     # lib only
     flags.append("--disable-shared")
     flags.append("--disable-examples")
+    flags.append("--disable-crypttests")
 
     # tls 1.3
     flags.append("--enable-tls13")
