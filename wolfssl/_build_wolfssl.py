@@ -34,14 +34,14 @@ def local_path(path):
     return os.path.abspath(os.path.join(current, path))
 
 
-WOLFSSL_GIT_ADDR = "https://github.com/wolfssl/wolfssl.git"
-WOLFSSL_SRC_PATH = local_path("lib/wolfssl/src")
+WOLFSSL_SRC_PATH = local_path("lib/wolfssl")
 
 
 def wolfssl_inc_path():
     wolfssl_path = os.environ.get("USE_LOCAL_WOLFSSL")
     if wolfssl_path is None:
-        return local_path("lib/wolfssl/src")
+        return local_path("lib/wolfssl/{}/{}/include".format(
+        get_platform(), version))
     else:
         if os.path.isdir(wolfssl_path) and os.path.exists(wolfssl_path):
             return wolfssl_path + "/include"
@@ -86,44 +86,32 @@ def chdir(new_path, mkdir=False):
         os.chdir(old_path)
 
 
-def clone_wolfssl(ref):
-    """ Clone wolfSSL C library repository
-    """
-    call("git clone --depth=1 --branch={} {} {}".format(
-        ref, WOLFSSL_GIT_ADDR, WOLFSSL_SRC_PATH))
-
-
-def checkout_ref(ref):
+def get_wolfssl_version(version):
     """ Ensure that we have the right version
     """
-    with chdir(WOLFSSL_SRC_PATH):
-        current = subprocess.check_output(
-            ["git", "describe", "--all", "--exact-match"]
-        ).strip().decode().split('/')[-1]
+    rebuild_needed = False
 
-        if current != ref:
-            tags = subprocess.check_output(
-                ["git", "tag"]
-            ).strip().decode().split("\n")
+    with chdir(os.path.join(WOLFSSL_SRC_PATH,"..")):
+        # check if file exists
+        wolfssl_tar = "wolfssl-{}.tar.gz".format(version)
+        if not os.path.isfile(wolfssl_tar):
+            call("curl -O https://wolfssl.com/{}".format(wolfssl_tar))
+            rebuild_needed = True
 
-            if ref != "master" and ref not in tags:
-                call("git fetch --depth=1 origin tag {}".format(ref))
+        if rebuild_needed or not os.path.isdir(wolfssl_tar.replace(".tar.gz","")):
+            call("tar xzf {}".format(wolfssl_tar))
+            rebuild_needed = True
 
-            call("git checkout --force {}".format(ref))
-
-            return True  # rebuild needed
-
-    return False
+    return rebuild_needed
 
 
 def ensure_wolfssl_src(ref):
     """ Ensure that wolfssl sources are presents and up-to-date
     """
     if not os.path.isdir(WOLFSSL_SRC_PATH):
-        clone_wolfssl(ref)
-        return True
+        os.mkdir(WOLFSSL_SRC_PATH)
 
-    return checkout_ref(ref)
+    return get_wolfssl_version(version)
 
 
 def make_flags(prefix, debug):
@@ -176,15 +164,7 @@ def make_flags(prefix, debug):
 def make(configure_flags):
     """ Create a release of wolfSSL C library
     """
-    with chdir(WOLFSSL_SRC_PATH):
-        call("git clean -fdX")
-
-        try:
-            call("./autogen.sh")
-        except subprocess.CalledProcessError:
-            call("libtoolize")
-            call("./autogen.sh")
-
+    with chdir(os.path.join(WOLFSSL_SRC_PATH, "../wolfssl-{}".format(version))):
         call("./configure {}".format(configure_flags))
         call("make")
         call("make install")

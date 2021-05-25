@@ -50,7 +50,7 @@ def verify_wolfssl_config():
 
     # open <wolfssl/options.h> header to parse for #define's
     # This will throw a FileNotFoundError if not able to find options.h
-    optionsHeaderPath = wolfssl_inc_path() + "/wolfssl/options.h"
+    optionsHeaderPath = os.path.join(wolfssl_inc_path(), "wolfssl", "options.h")
     optionsHeader = open(optionsHeaderPath, 'r')
     optionsHeaderStr = optionsHeader.read()
     optionsHeader.close()
