@@ -116,6 +116,9 @@ def ensure_wolfssl_src(ref):
     if not os.path.isdir(WOLFSSL_SRC_PATH):
         os.mkdir(WOLFSSL_SRC_PATH)
 
+    if not os.path.isdir(os.path.join(WOLFSSL_SRC_PATH, "wolfssl")):
+        subprocess.run(["git", "submodule", "update", "--init", "--depth=1"])
+
     return get_wolfssl_version(version)
 
 
