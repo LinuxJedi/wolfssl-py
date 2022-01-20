@@ -89,20 +89,25 @@ def chdir(new_path, mkdir=False):
 def get_wolfssl_version(version):
     """ Ensure that we have the right version
     """
-    rebuild_needed = False
+    with chdir(WOLFSSL_SRC_PATH):
+        current = ""
+        try:
+            current = subprocess.check_output(
+                ["git", "describe", "--all", "--exact-match"]
+            ).strip().decode().split('/')[-1]
+        except:
+            pass
 
-    with chdir(os.path.join(WOLFSSL_SRC_PATH,"..")):
-        # check if file exists
-        wolfssl_tar = "wolfssl-{}.tar.gz".format(version)
-        if not os.path.isfile(wolfssl_tar):
-            call("curl -O https://wolfssl.com/{}".format(wolfssl_tar))
-            rebuild_needed = True
+        if current != version:
+            tags = subprocess.check_output(
+                ["git", "tag"]
+            ).strip().decode().split("\n")
+            if version != "master" and version not in tags:
+                call("git fetch --depth=1 origin tag {}".format(version))
+            call("git checkout --force {}".format(version))
+            return True
 
-        if rebuild_needed or not os.path.isdir(wolfssl_tar.replace(".tar.gz","")):
-            call("tar xzf {}".format(wolfssl_tar))
-            rebuild_needed = True
-
-    return rebuild_needed
+    return False
 
 
 def ensure_wolfssl_src(ref):
@@ -164,7 +169,8 @@ def make_flags(prefix, debug):
 def make(configure_flags):
     """ Create a release of wolfSSL C library
     """
-    with chdir(os.path.join(WOLFSSL_SRC_PATH, "../wolfssl-{}".format(version))):
+    with chdir(WOLFSSL_SRC_PATH):
+        call("./autogen.sh")
         call("./configure {}".format(configure_flags))
         call("make")
         call("make install")
