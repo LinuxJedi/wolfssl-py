@@ -30,6 +30,7 @@ import wolfssl._openssl as openssl
 import subprocess
 import shlex
 import os
+import sys
 from ctypes import cdll
 from collections import namedtuple
 
