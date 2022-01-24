@@ -39,15 +39,18 @@ WOLFSSL_SRC_PATH = local_path("lib/wolfssl")
 
 
 def wolfssl_inc_path():
-    wolfssl_path = os.environ.get("USE_LOCAL_WOLFSSL")
-    if wolfssl_path is None:
-        return local_path("lib/wolfssl/{}/{}/include".format(
-        get_platform(), version))
+    if sys.platform == "win32":
+        return os.path.join(WOLFSSL_SRC_PATH)
     else:
-        if os.path.isdir(wolfssl_path) and os.path.exists(wolfssl_path):
-            return wolfssl_path + "/include"
+        wolfssl_path = os.environ.get("USE_LOCAL_WOLFSSL")
+        if wolfssl_path is None:
+            return local_path("lib/wolfssl/{}/{}/include".format(
+            get_platform(), version))
         else:
-            return "/usr/local/include"
+            if os.path.isdir(wolfssl_path) and os.path.exists(wolfssl_path):
+                return wolfssl_path + "/include"
+            else:
+                return "/usr/local/include"
 
 
 def wolfssl_lib_path():

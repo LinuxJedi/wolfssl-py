@@ -57,6 +57,7 @@ def make_optional_func_list(libwolfssl_path, funcs):
     return defined
 
 def get_libwolfssl():
+    global libwolfssl_path
     if sys.platform == "win32":
         libwolfssl_path = os.path.join(wolfssl_lib_path(), "wolfssl.dll")
         if not os.path.exists(libwolfssl_path):
