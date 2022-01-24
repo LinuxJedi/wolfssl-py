@@ -184,9 +184,10 @@ def make(configure_flags):
     """ Create a release of wolfSSL C library
     """
     if sys.platform == 'win32':
-        with chdir(WOLFSSL_SRC_PATH):
-            call("mkdir build")
-        with chdir(os.path.join(WOLFSSL_SRC_PATH, "build")):
+        build_path = os.path.join(WOLFSSL_SRC_PATH, "build")
+        if not os.path.isdir(build_path):
+            os.mkdir(build_path)
+        with chdir(build_path):
             call("cmake .. {}".format(configure_flags))
             call("cmake --build . --config Release")
     else:
