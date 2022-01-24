@@ -36,7 +36,7 @@ from collections import namedtuple
 libwolfssl_path = ""
 
 def make_optional_func_list(libwolfssl_path, funcs):
-    if libwolfssl_path.endswith(".so"):
+    if libwolfssl_path.endswith(".so") or libwolfssl_path.endswith(".dll"):
         libwolfssl = cdll.LoadLibrary(libwolfssl_path)
         defined = []
         for func in funcs:
@@ -56,15 +56,22 @@ def make_optional_func_list(libwolfssl_path, funcs):
     return defined
 
 def get_libwolfssl():
-    libwolfssl_path = os.path.join(wolfssl_lib_path(), "libwolfssl.a")
-    if not os.path.exists(libwolfssl_path):
-        libwolfssl_path = os.path.join(wolfssl_lib_path(), "libwolfssl.so")
+    if sys.platform == "win32":
+        libwolfssl_path = os.path.join(wolfssl_lib_path(), "wolfssl.dll")
         if not os.path.exists(libwolfssl_path):
             return 0
         else:
             return 1
     else:
-        return 1
+        libwolfssl_path = os.path.join(wolfssl_lib_path(), "libwolfssl.a")
+        if not os.path.exists(libwolfssl_path):
+            libwolfssl_path = os.path.join(wolfssl_lib_path(), "libwolfssl.so")
+            if not os.path.exists(libwolfssl_path):
+                return 0
+            else:
+                return 1
+        else:
+            return 1
 
 def generate_libwolfssl():
     ensure_wolfssl_src(version)

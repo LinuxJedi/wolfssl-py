@@ -51,15 +51,18 @@ def wolfssl_inc_path():
 
 
 def wolfssl_lib_path():
-    wolfssl_path = os.environ.get("USE_LOCAL_WOLFSSL")
-    if wolfssl_path is None:
-        return local_path("lib/wolfssl/{}/{}/lib".format(
-                          get_platform(), version))
+    if sys.platform == "win32":
+        return os.path.join(WOLFSSL_SRC_PATH, "build", "Release")
     else:
-        if os.path.isdir(wolfssl_path) and os.path.exists(wolfssl_path):
-            return wolfssl_path + "/lib"
+        wolfssl_path = os.environ.get("USE_LOCAL_WOLFSSL")
+        if wolfssl_path is None:
+            return local_path("lib/wolfssl/{}/{}/lib".format(
+                              get_platform(), version))
         else:
-            return "/usr/local/lib"
+            if os.path.isdir(wolfssl_path) and os.path.exists(wolfssl_path):
+                return wolfssl_path + "/lib"
+            else:
+                return "/usr/local/lib"
 
 
 def call(cmd):
