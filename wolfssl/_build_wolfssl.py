@@ -188,7 +188,7 @@ def make(configure_flags):
             call("mkdir build")
         with chdir(os.path.join(WOLFSSL_SRC_PATH, "build")):
             call("cmake .. {}".format(configure_flags))
-            call("cmake --build .. --config Release")
+            call("cmake --build . --config Release")
     else:
         with chdir(WOLFSSL_SRC_PATH):
             call("./autogen.sh")
