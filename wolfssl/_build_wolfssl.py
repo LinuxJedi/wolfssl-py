@@ -136,6 +136,7 @@ def make_flags(prefix, debug):
         flags = []
         flags.append("-DWOLFSSL_CRYPT_TESTS=no")
         flags.append("-DWOLFSSL_EXAMPLES=no")
+        flags.append("-DBUILD_SHARED_LIBS=off")
         flags.append("-DWOLFSSL_TLS13=yes")
         flags.append("-DWOLFSSL_TLSX=yes")
         flags.append("-DWOLFSSL_OPENSSLEXTRA=yes")
