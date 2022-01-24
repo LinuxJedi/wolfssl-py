@@ -125,64 +125,84 @@ def ensure_wolfssl_src(ref):
 def make_flags(prefix, debug):
     """ Returns compilation flags
     """
-    flags = []
-    cflags = []
+    if sys.platform == "win32":
+        flags = []
+        flags.append("-DWOLFSSL_CRYPT_TESTS=no")
+        flags.append("-DWOLFSSL_EXAMPLES=no")
+        flags.append("-DWOLFSSL_TLS13=yes")
+        flags.append("-DWOLFSSL_TLSX=yes")
+        flags.append("-DWOLFSSL_OPENSSLEXTRA=yes")
+        flags.append("-DCMAKE_C_FLAGS=\"-DKEEP_PEER_CERT\"")
+        return " ".join(flags)
+    else:
+        flags = []
+        cflags = []
 
-    if get_platform() in ["linux-x86_64", "linux-i686"]:
-        cflags.append("-fpic")
+        if get_platform() in ["linux-x86_64", "linux-i686"]:
+            cflags.append("-fpic")
 
-    # install location
-    flags.append("--prefix={}".format(prefix))
+        # install location
+        flags.append("--prefix={}".format(prefix))
 
-    # lib only
-    flags.append("--disable-shared")
-    flags.append("--disable-examples")
-    flags.append("--disable-crypttests")
+        # lib only
+        flags.append("--disable-shared")
+        flags.append("--disable-examples")
+        flags.append("--disable-crypttests")
 
-    # tls 1.3
-    flags.append("--enable-tls13")
-    flags.append("--enable-sslv3")
+        # tls 1.3
+        flags.append("--enable-tls13")
+        flags.append("--enable-sslv3")
 
-    # for urllib3 - requires SNI (tlsx), options (openssl compat), peer cert
-    flags.append("--enable-tlsx")
-    flags.append("--enable-opensslextra")
-    cflags.append("-DKEEP_PEER_CERT")
+        # for urllib3 - requires SNI (tlsx), options (openssl compat), peer cert
+        flags.append("--enable-tlsx")
+        flags.append("--enable-opensslextra")
+        cflags.append("-DKEEP_PEER_CERT")
 
-    # for pyOpenSSL
-    flags.append("--enable-secure-renegotiation")
-    flags.append("--enable-opensslall")
-    cflags.append("-DFP_MAX_BITS=8192")
-    cflags.append("-DHAVE_EX_DATA")
-    cflags.append("-DOPENSSL_COMPATIBLE_DEFAULTS")
+        # for pyOpenSSL
+        flags.append("--enable-secure-renegotiation")
+        flags.append("--enable-opensslall")
+        cflags.append("-DFP_MAX_BITS=8192")
+        cflags.append("-DHAVE_EX_DATA")
+        cflags.append("-DOPENSSL_COMPATIBLE_DEFAULTS")
 
-    if debug:
-        flags.append("--enable-debug")
+        if debug:
+            flags.append("--enable-debug")
 
-    # Note: websocket-client test server (echo.websocket.org) only supports
-    # TLS 1.2 with TLS_RSA_WITH_AES_128_CBC_SHA
-    # If compiling for use with websocket-client, must enable static RSA suites.
-    # cflags.append("-DWOLFSSL_STATIC_RSA")
+        # Note: websocket-client test server (echo.websocket.org) only supports
+        # TLS 1.2 with TLS_RSA_WITH_AES_128_CBC_SHA
+        # If compiling for use with websocket-client, must enable static RSA suites.
+        # cflags.append("-DWOLFSSL_STATIC_RSA")
 
-    joined_flags = " ".join(flags)
-    joined_cflags = " ".join(cflags)
+        joined_flags = " ".join(flags)
+        joined_cflags = " ".join(cflags)
 
-    return joined_flags + " CFLAGS=\"" + joined_cflags + "\""
+        return joined_flags + " CFLAGS=\"" + joined_cflags + "\""
 
 
 def make(configure_flags):
     """ Create a release of wolfSSL C library
     """
-    with chdir(WOLFSSL_SRC_PATH):
-        call("./autogen.sh")
-        call("./configure {}".format(configure_flags))
-        call("make")
-        call("make install")
+    if sys.platform == 'win32':
+        with chdir(WOLFSSL_SRC_PATH):
+            call("mkdir build")
+        with chdir(os.path.join(WOLFSSL_SRC_PATH, "build")):
+            call("cmake .. {}".format(configure_flags))
+            call("cmake --build .. --config Release")
+    else:
+        with chdir(WOLFSSL_SRC_PATH):
+            call("./autogen.sh")
+            call("./configure {}".format(configure_flags))
+            call("make")
+            call("make install")
 
 
 def build_wolfssl(ref, debug=False):
     prefix = local_path("lib/wolfssl/{}/{}".format(
         get_platform(), ref))
-    libfile = os.path.join(prefix, 'lib/libwolfssl.la')
+    if sys.platform == 'win32':
+        libfile = os.path.join(WOLFSSL_SRC_PATH, "build", "Release", "wolfssl.dll")
+    else:
+        libfile = os.path.join(prefix, 'lib/libwolfssl.la')
 
     rebuild = ensure_wolfssl_src(ref)
 

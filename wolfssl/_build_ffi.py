@@ -93,8 +93,14 @@ optional_funcs = [
 optional_funcs = make_optional_func_list(libwolfssl_path, optional_funcs)
 
 source = """
+#ifdef __cplusplus
+extern "C" {
+#endif
     #include <wolfssl/options.h>
     #include <wolfssl/ssl.h>
+#ifdef __cplusplus
+}
+#endif
 """
 ffi_source = source + openssl.source
 
